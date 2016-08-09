@@ -67,6 +67,8 @@ abstract class TweetSet {
     */
   def mostRetweeted: Tweet
 
+  def isEmpty: Boolean
+
   /**
     * Returns a list containing all tweets of this set, sorted by retweet count
     * in descending order. In other words, the head of the resulting list should
@@ -76,7 +78,27 @@ abstract class TweetSet {
     * Question: Should we implment this method here, or should it remain abstract
     * and be implemented in the subclasses?
     */
-  def descendingByRetweet: TweetList = ???
+  def descendingByRetweet: TweetList = {
+    def append(list: TweetList, elem: Tweet): TweetList = {
+      if (list.isEmpty)
+        new Cons(elem, Nil)
+      else
+        new Cons(list.head, append(list.tail, elem))
+    }
+    def f(set: TweetSet, l: TweetList): (TweetSet, TweetList) = {
+      if (!set.isEmpty) {
+        val maxTweet = set.mostRetweeted
+        f(set.remove(maxTweet), append(l, maxTweet))
+        //        if (l.isEmpty)
+        //          f(set.remove(maxTweet), new Cons(maxTweet, l))
+        //        else
+        //          f(set.remove(maxTweet), new Cons(l.head, l.append(maxTweet)))
+      } else
+        (set, l)
+    }
+    if (this.isEmpty) Nil else f(this, Nil)._2
+
+  }
 
   /**
     * The following methods are already implemented
@@ -111,6 +133,8 @@ class Empty extends TweetSet {
 
   def mostRetweeted: Tweet = throw new NoSuchElementException("Set is empty")
 
+  def isEmpty: Boolean = true
+
   /**
     * The following methods are already implemented
     */
@@ -142,11 +166,28 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     if (p(elem)) filterSubsets.incl(elem) else filterSubsets
   }
 
-  def mostRetweeted: = {
-    val leftTweet = left.mostRetweeted
-    val rightTweet = right.mostRetweeted
+  def mostRetweeted: Tweet = (left.isEmpty, right.isEmpty) match {
+
+    case (true, true) => elem
+    case (true, false) =>
+      val rightTweet = right.mostRetweeted
+      if (elem.retweets > rightTweet.retweets) elem else rightTweet
+    case (false, true) =>
+      val leftTweet = left.mostRetweeted
+      if (elem.retweets > leftTweet.retweets) elem else leftTweet
+    case (false, false) =>
+      val leftTweet = left.mostRetweeted
+      val rightTweet = right.mostRetweeted
+      if (elem.retweets > leftTweet.retweets)
+        elem
+      else if (leftTweet.retweets > rightTweet.retweets)
+        leftTweet
+      else rightTweet
+
+
   }
 
+  def isEmpty: Boolean = false
 
   /**
     * The following methods are already implemented
@@ -206,7 +247,7 @@ object GoogleVsApple {
   val google = List("android", "Android", "galaxy", "Galaxy", "nexus", "Nexus")
   val apple = List("ios", "iOS", "iphone", "iPhone", "ipad", "iPad")
 
-  lazy val googleTweets: TweetSet = ???
+  lazy val googleTweets: TweetSet =
   lazy val appleTweets: TweetSet = ???
 
   /**
